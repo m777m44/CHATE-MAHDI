@@ -50,17 +50,43 @@ jobs:
         working-directory: mobile
         run: flutter pub get
 
-      # 5) Decode the signing keystore from repository secrets
-      - name: Decode keystore
+      # 5) Signing keystore: release key from secrets when available.
+      #    Otherwise a transitional keystore is generated once and persisted in
+      #    the Actions cache so successive builds keep the same signature and
+      #    in-app updates still install over each other until the owner adds
+      #    the 4 ANDROID_KEYSTORE_* secrets (see README).
+      - name: Restore persisted signing key
+        id: keystore_cache
+        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 == '' }}
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/ciem-key.jks
+          key: ci-ephemeral-signing-key-v1
+
+      - name: Prepare signing key
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
         run: |
-          if [ -z "${ANDROID_KEYSTORE_BASE64}" ]; then
-            echo "::error::Repository secrets are missing. Set the 4 secrets (ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD) as shown in README > 'التوقيع والـ Secrets', then re-run this workflow."
-            exit 1
+          if [ -n "${ANDROID_KEYSTORE_BASE64}" ]; then
+            echo "${ANDROID_KEYSTORE_BASE64}" | base64 -d > "${CM_KEYSTORE_PATH}"
+            test -s "${CM_KEYSTORE_PATH}"
+            echo "signed_with=release-secrets" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::warning::ANDROID_KEYSTORE_* secrets not set yet - signing with a transient keystore cached between runs. Add the 4 secrets (see README > التوقيع والـ Secrets) for a permanent signing identity."
+            mkdir -p "$(dirname "${CM_KEYSTORE_PATH}")"
+            if [ ! -s ~/.android/ciem-key.jks ]; then
+              keytool -genkeypair -v -keystore ~/.android/ciem-key.jks \
+                -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 \
+                -storepass androiddebugkey -keypass androiddebugkey \
+                -dname "CN=ANDROID DEBUG, O=ANDROID, C=US" >/dev/null 2>&1
+            fi
+            cp ~/.android/ciem-key.jks "${CM_KEYSTORE_PATH}"
+            echo "CM_KEYSTORE_PATH=${CM_KEYSTORE_PATH}" >> "$GITHUB_ENV"
+            echo "CM_KEYSTORE_PASSWORD=androiddebugkey" >> "$GITHUB_ENV"
+            echo "CM_KEY_ALIAS=androiddebugkey" >> "$GITHUB_ENV"
+            echo "CM_KEY_PASSWORD=androiddebugkey" >> "$GITHUB_ENV"
+            echo "signed_with=transient-cached-keystore" >> "$GITHUB_STEP_SUMMARY"
           fi
-          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$CM_KEYSTORE_PATH"
-          test -s "$CM_KEYSTORE_PATH"
 
       # 6) Release-signed APK (versionCode increases with every run_number)
       - name: Build release APK
