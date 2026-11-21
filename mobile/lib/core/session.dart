@@ -276,7 +276,7 @@ String humanError(Object e) {
       e.type == DioExceptionType.connectionTimeout ||
       e.type == DioExceptionType.receiveTimeout ||
       e.type == DioExceptionType.sendTimeout) {
-    return 'تعذر الاتصال بالخادم. تحقق من اتصال الإنترنت أو عنوان الخادم';
+    return 'تعذر الاتصال بالخادم؛ تأكد أن الخادم يعمل وإن من عنوان الخادم صحيح';
   }
   if (e.type == DioExceptionType.cancel) return 'تم إلغاء العملية';
   if (e.response?.statusCode == 404) {

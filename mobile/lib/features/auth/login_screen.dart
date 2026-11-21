@@ -89,8 +89,34 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
             if (session.error != null)
               Padding(
-                padding: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.only(bottom: 8),
                 child: Text(session.error!, style: const TextStyle(color: Colors.red)),
+              ),
+            if (session.error != null)
+              Card(
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                margin: const EdgeInsets.only(bottom: 12),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('التطبيق يحتاج خادمه الخاص ليعمل',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5)),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'شغّل الخادم على حاسوبك (شرح كامل في README)، ثم أدخل عنوانه من زر «الخادم الشخصي» أدناه — على المحاكي استعمل 10.0.2.2 وعلى هاتف حقيقي استعمل عنوان حاسوبك في نفس الشبكة (مثال http://192.168.1.20:4000)؛ أو من طريق USB استعمل 127.0.0.1 بعد تنفيذ: adb reverse tcp:4000 tcp:4000.',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                      const SizedBox(height: 8),
+                      FilledButton.tonal(
+                        onPressed: () => ServerDialog.show(context),
+                        style: FilledButton.styleFrom(visualDensity: VisualDensity.compact),
+                        child: const Text('إعداد الخادم واختبار الاتصال', style: TextStyle(fontSize: 13)),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             FilledButton(
               onPressed: session.busy ? null : () => _submit(controller),
