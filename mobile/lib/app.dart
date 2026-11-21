@@ -15,6 +15,7 @@ import 'features/dm/inbox_screen.dart';
 import 'features/explore/explore_screen.dart';
 import 'features/feed/feed_providers.dart';
 import 'features/feed/home_screen.dart';
+import 'features/home_shell.dart';
 import 'features/notifications/notifications_screen.dart';
 import 'features/posts/create_post_screen.dart';
 import 'features/posts/image_viewer_screen.dart';
@@ -172,7 +173,7 @@ class _ChatemahdiAppState extends ConsumerState<ChatemahdiApp> {
     final session = ref.read(sessionProvider);
     if (session.isAuthed && session.tokens != null) {
       socketManager.connect(ref.read(baseUrlProvider), session.tokens!.accessToken);
-      socketManager.notifications.stream.listen((_) {
+      socketManager.notifications.listen((_) {
         ref.read(notificationsUnreadProvider.notifier).bump();
       });
     }

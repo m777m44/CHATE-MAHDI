@@ -19,7 +19,7 @@ class ProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
-  static const _missing = User(id: 'missing', username: '...');
+  static final _missing = User(id: 'missing', username: '...');
 
   Map<String, dynamic>? _data;
   User _user = _missing;
@@ -118,7 +118,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       });
       final c = res.data['conversation'] as Map<String, dynamic>;
       if (!mounted) return;
-      context.push('/dm/${c['id']}', queryParameters: {'title': widget.username});
+      context.push('/dm/${c['id']}?title=${Uri.encodeComponent(widget.username)}');
     } catch (_) {}
   }
 

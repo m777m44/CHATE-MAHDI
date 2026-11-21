@@ -95,7 +95,7 @@ class UpdateService {
     if (!path.toLowerCase().endsWith('.apk')) {
       throw Exception('APK download failed: wrong extension');
     }
-    if (await file.length() == 0) {
+    if ((await file.length()) == 0) {
       throw Exception('APK download failed: empty file');
     }
     return file;

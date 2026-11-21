@@ -23,7 +23,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
   void initState() {
     super.initState();
     _load();
-    socketManager.messages.stream.listen((data) {
+    socketManager.messages.listen((data) {
       if (mounted) _load();
     });
   }
@@ -111,10 +111,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
                                 style: const TextStyle(fontSize: 11, color: Colors.grey),
                               )
                             : null,
-                        onTap: () => context.push(
-                          '/dm/${c.id}',
-                          queryParameters: {'title': c.title},
-                        ),
+                        onTap: () => context.push('/dm/${c.id}?title=${Uri.encodeComponent(c.title)}'),
                       );
                     },
                   ),
@@ -200,10 +197,7 @@ class _NewConversationSheetState extends ConsumerState<_NewConversationSheet> {
                         if (!mounted) return;
                         Navigator.of(context).pop(true);
                         if (context.mounted) {
-                          context.push(
-                            '/dm/${c['id']}',
-                            queryParameters: {'title': c['title']?.toString() ?? 'محادثة'},
-                          );
+                          context.push('/dm/${c['id']}?title=${Uri.encodeComponent(c['title']?.toString() ?? 'محادثة')}');
                         }
                       } catch (_) {
                         setState(() {

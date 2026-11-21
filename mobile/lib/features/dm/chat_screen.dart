@@ -42,12 +42,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   void initState() {
     super.initState();
     _myId = ref.read(sessionProvider).user?.id;
-    _subNew = socketManager.messages.stream.listen((data) {
+    _subNew = socketManager.messages.listen((data) {
       if (data['conversationId'] != widget.conversationId) return;
       final raw = data['message'];
       if (raw is Map<String, dynamic>) _append(Message.fromJson(raw));
     });
-    _subTyping = socketManager.typing.stream.listen((data) {
+    _subTyping = socketManager.typing.listen((data) {
       if (data['conversationId'] != widget.conversationId) return;
       if (!mounted) return;
       _typingClear?.cancel();

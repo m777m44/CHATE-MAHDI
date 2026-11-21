@@ -6,6 +6,7 @@ import '../../app.dart' show themeModeProvider;
 import '../../core/api_client.dart';
 import '../../core/session.dart';
 import '../update/update_controller.dart';
+import '../update/update_models.dart';
 import '../update/update_ui.dart';
 
 /// Settings: appearance, privacy, in-app update, logout.

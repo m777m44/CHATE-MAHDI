@@ -112,7 +112,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                                   avatar.isNotEmpty ? NetworkImage(avatar) : null,
                               child: avatar.isEmpty ? const Icon(Icons.person) : null,
                             ),
-                            Positioned(
+                            PositionedDirectional(
                               bottom: -2,
                               end: -2,
                               child: CircleAvatar(

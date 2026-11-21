@@ -119,11 +119,11 @@ final storiesProvider =
 // ---------- realtime notifications badge ----------
 class NotificationsUnreadNotifier extends StateNotifier<int> {
   NotificationsUnreadNotifier(this.ref) : super(0) {
-    socketManager.notifications.stream.listen((_) {
+    socketManager.notifications.listen((_) {
       bump();
     });
     if (socketManager.connected) {
-      socketManager.messages.stream.listen((_) {
+      socketManager.messages.listen((_) {
         bump();
       });
     }
