@@ -74,11 +74,12 @@ jobs:
             echo "::warning::ANDROID_KEYSTORE_* secrets not set yet - signing with a transient keystore cached between runs. Add the 4 secrets (see README > التوقيع والـ Secrets) for a permanent signing identity."
             mkdir -p "$(dirname "${CM_KEYSTORE_PATH}")"
             if [ ! -s ~/.android/ciem-key.jks ]; then
-              keytool -genkeypair -v -keystore ~/.android/ciem-key.jks \
+              "$JAVA_HOME/bin/keytool" -genkeypair -v -keystore ~/.android/ciem-key.jks \
                 -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 \
                 -storepass androiddebugkey -keypass androiddebugkey \
-                -dname "CN=ANDROID DEBUG, O=ANDROID, C=US" >/dev/null 2>&1
+                -dname "CN=ANDROID DEBUG, O=ANDROID, C=US"
             fi
+test -s ~/.android/ciem-key.jks
             cp ~/.android/ciem-key.jks "${CM_KEYSTORE_PATH}"
             echo "CM_KEYSTORE_PATH=${CM_KEYSTORE_PATH}" >> "$GITHUB_ENV"
             echo "CM_KEYSTORE_PASSWORD=androiddebugkey" >> "$GITHUB_ENV"
