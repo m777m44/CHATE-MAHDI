@@ -1,0 +1,16 @@
+# OS / editor junk
+.DS_Store
+Thumbs.db
+*.swp
+
+# Buildings & dependencies (each component has its own .gitignore too)
+node_modules/
+dist/
+build/
+.dart_tool/
+
+# Secrets must never be committed
+.env
+**/*.jks
+**/*.keystore
+key.properties

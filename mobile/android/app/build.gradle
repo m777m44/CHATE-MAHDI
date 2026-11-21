@@ -1,0 +1,67 @@
+// Android Gradle build for CHATE-MAHDI.
+// The applicationId MUST stay identical between releases (com.mahdim44.chatemahdi)
+// and the SAME keystore must sign every release, otherwise Android will refuse
+// to install an update over an existing installation (signature mismatch).
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
+    id "dev.flutter.flutter-gradle-plugin"
+}
+
+// Release signing config is injected from environment variables (CI / local).
+// In GitHub Actions these come from the ANDROID_KEYSTORE_* repository secrets;
+// locally you can put them in android/key.properties or export them manually.
+def keystoreFilePath = System.getenv("CM_KEYSTORE_PATH") ?: "key.jks"
+def keystoreStorePassword = System.getenv("CM_KEYSTORE_PASSWORD")
+def keystoreKeyAlias = System.getenv("CM_KEY_ALIAS")
+def keystoreKeyPassword = System.getenv("CM_KEY_PASSWORD")
+
+android {
+    namespace = "com.mahdim44.chatemahdi"
+    compileSdk = 34
+    ndkVersion = "25.1.8937393"
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    defaultConfig {
+        applicationId = "com.mahdim44.chatemahdi"
+        minSdk = 21
+        targetSdk = 34
+        versionCode = flutter.versionCode
+        versionName = flutter.versionName
+    }
+
+    signingConfigs {
+        // Signed release builds with a stable keystore are required so that
+        // in-app updates can silently replace the previous installation.
+        release {
+            if (keystoreStorePassword != null && keystoreKeyAlias != null) {
+                storeFile = file(keystoreFilePath)
+                storePassword = keystoreStorePassword
+                keyAlias = keystoreKeyAlias
+                keyPassword = keystoreKeyPassword
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            // CI always provides the CM_KEYSTORE_* env vars and uses the stable
+            // release keystore. Local builds without them fall back to the debug
+            // key so `flutter build apk --release` still works.
+            signingConfig = keystoreStorePassword != null
+                    ? signingConfigs.release
+                    : signingConfigs.debug
+            minifyEnabled = false
+            shrinkResources = false
+        }
+    }
+}
+
+flutter {
+    source = "../.."
+}
