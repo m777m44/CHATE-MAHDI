@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/session.dart';
+import 'server_dialog.dart';
 
 class SignupScreen extends ConsumerStatefulWidget {
   const SignupScreen({super.key});
@@ -49,6 +50,12 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   Widget build(BuildContext context) {
     final session = ref.watch(sessionProvider);
     final controller = ref.read(sessionProvider.notifier);
+
+    ref.listen<SessionState>(sessionProvider, (prev, next) {
+      if (next.isAuthed && !(prev?.isAuthed ?? false) && mounted) {
+        context.go('/home');
+      }
+    });
 
     return Scaffold(
       appBar: AppBar(title: const Text('إنشاء حساب')),
@@ -117,7 +124,15 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                   ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                   : const Text('إنشاء الحساب', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
+            Center(
+              child: TextButton.icon(
+                onPressed: () => ServerDialog.show(context),
+                icon: const Icon(Icons.dns_outlined, size: 18),
+                label: const Text('الخادم الشخصي (متقدم)', style: TextStyle(fontSize: 13)),
+              ),
+            ),
+            const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [

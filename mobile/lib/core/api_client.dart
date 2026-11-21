@@ -40,9 +40,13 @@ class ApiClient {
       },
       onError: (error, handler) async {
         final status = error.response?.statusCode;
-        if (status == 401) {
+        // Retry once per request only, so a perpetually-rejected access token
+        // can never loop forever (infinite spinner protection).
+        final retried = error.requestOptions.extra['__cmRetried'] == true;
+        if (status == 401 && !retried) {
           final ok = await _tryRefresh();
           if (ok) {
+            error.requestOptions.extra['__cmRetried'] = true;
             final retryRes = await _retry(error.requestOptions);
             return handler.resolve(retryRes);
           }
@@ -57,7 +61,13 @@ class ApiClient {
     final tokens = _ref.read(tokensProvider);
     if (tokens?.refreshToken == null) return false;
     try {
-      final res = await Dio().post(
+      final res = await Dio(
+        BaseOptions(
+          connectTimeout: const Duration(seconds: 8),
+          receiveTimeout: const Duration(seconds: 10),
+          validateStatus: (code) => code != null && code < 500,
+        ),
+      ).post(
         '${_dio.options.baseUrl}/auth/refresh',
         data: {'refreshToken': tokens!.refreshToken},
       );

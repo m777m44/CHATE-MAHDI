@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
@@ -116,12 +117,19 @@ class SessionController extends StateNotifier<SessionState> {
     final api = ref.read(apiClientProvider);
     state = state.copyWith(busy: true, clearError: true);
     try {
-      final res = await api.post('/auth/login', data: {
-        'identifier': identifier,
-        'password': password,
-      });
+      final res = await api
+          .post('/auth/login', data: {
+            'identifier': identifier,
+            'password': password,
+          })
+          .timeout(const Duration(seconds: 30));
       await _applyAuthResponse(res.data);
       state = state.copyWith(busy: false, clearError: true);
+    } on TimeoutException {
+      state = state.copyWith(
+        busy: false,
+        error: 'استغرق الاتصال بالخادم وقتاً طويلاً جداً. تحقق من العنوان والاتصال وحاول مجدداً.',
+      );
     } catch (e) {
       state = state.copyWith(busy: false, error: humanError(e));
     }
@@ -151,16 +159,83 @@ class SessionController extends StateNotifier<SessionState> {
     final api = ref.read(apiClientProvider);
     state = state.copyWith(busy: true, clearError: true);
     try {
-      final res = await api.post('/auth/register', data: {
-        'email': email,
-        'username': username,
-        'name': name.isEmpty ? username : name,
-        'password': password,
-      });
+      final res = await api
+          .post('/auth/register', data: {
+            'email': email,
+            'username': username,
+            'name': name.isEmpty ? username : name,
+            'password': password,
+          })
+          .timeout(const Duration(seconds: 30));
       await _applyAuthResponse(res.data);
       state = state.copyWith(busy: false, clearError: true);
+    } on TimeoutException {
+      state = state.copyWith(
+        busy: false,
+        error: 'استغرق إنشاء الحساب وقتاً طويلاً جداً. تحقق من العنوان والاتصال وحاول مجدداً.',
+      );
     } catch (e) {
       state = state.copyWith(busy: false, error: humanError(e));
+    }
+  }
+
+  /// Normalizes a user-provided server address to a full API base URL.
+  /// Returns null when the input cannot possibly be a valid host.
+  static String? normalizeServerUrl(String input) {
+    var url = input.trim();
+    if (url.isEmpty) return null;
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      url = 'http://$url';
+    }
+    final uri = Uri.tryParse(url);
+    if (uri == null || !uri.hasScheme || uri.host.isEmpty) return null;
+    while (url.endsWith('/') && url.length > 1) {
+      url = url.substring(0, url.length - 1);
+    }
+    if (!url.endsWith('/api')) url = '$url/api';
+    final base = Uri.tryParse(url);
+    if (base == null || base.host.isEmpty) return null;
+    return url;
+  }
+
+  /// Points the app at a different personal server and logs out first, so
+  /// accounts never mix between servers (each user can run their own server).
+  Future<void> setServerUrl(String input) async {
+    final url = normalizeServerUrl(input);
+    if (url == null) {
+      state = state.copyWith(error: 'عنوان الخادم غير صالح. مثال: http://192.168.1.20:4000');
+      return;
+    }
+    if (url == ref.read(baseUrlProvider)) return;
+    logout();
+    ref.read(baseUrlProvider.notifier).state = url;
+    ref.read(apiClientProvider).updateBaseUrl(url);
+    await SessionStorage.setString('baseUrl', url);
+    state = state.copyWith(clearError: true);
+  }
+
+  /// GETs {url}/auth/health with a short timeout. Returns an Arabic error
+  /// message, or null when the server answers correctly.
+  Future<String?> testServerConnection(String input) async {
+    final url = normalizeServerUrl(input);
+    if (url == null) return 'عنوان الخادم غير صالح';
+    try {
+      final res = await Dio(
+        BaseOptions(
+          connectTimeout: const Duration(seconds: 8),
+          receiveTimeout: const Duration(seconds: 10),
+          validateStatus: (code) => code != null && code < 500,
+        ),
+      )
+          .get('$url/auth/health')
+          .timeout(const Duration(seconds: 12));
+      final ok = res.data is Map && res.data['ok'] == true;
+      if (ok) return null;
+      return 'الخادم استجاب لكنه ليس خادم CHATE-MAHDI — تحقق من العنوان';
+    } on TimeoutException {
+      return 'انتهت المهلة بدون استجابة من الخادم';
+    } catch (_) {
+      return 'تعذر الوصول إلى الخادم — تحقق من العنوان وشبكة الهاتف';
     }
   }
 
@@ -204,6 +279,9 @@ String humanError(Object e) {
     return 'تعذر الاتصال بالخادم. تحقق من اتصال الإنترنت أو عنوان الخادم';
   }
   if (e.type == DioExceptionType.cancel) return 'تم إلغاء العملية';
+  if (e.response?.statusCode == 404) {
+    return 'تعذر العثور على نقطة الاتصال في الخادم. تأكد من أن العنوان صحيح وأن الخادم محدث (يشمل المسار /api).';
+  }
   return 'حدث خطأ غير متوقع (${e.response?.statusCode ?? e.type.name})';
 }
 

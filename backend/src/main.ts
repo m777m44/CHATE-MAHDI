@@ -17,6 +17,10 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   app.set('trust proxy', 1);
 
+  // All REST routes live under /api (matches the mobile app default base URL
+  // http://host:4000/api), while static uploads stay at /uploads.
+  app.setGlobalPrefix('api');
+
   // Serve locally-stored upload files when STORAGE_DRIVER=local.
   app.useStaticAssets(join(__dirname, '..', 'uploads'), { prefix: '/uploads' });
 

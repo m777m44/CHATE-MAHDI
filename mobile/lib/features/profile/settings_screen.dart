@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../app.dart' show themeModeProvider;
 import '../../core/api_client.dart';
 import '../../core/session.dart';
+import '../auth/server_dialog.dart';
 import '../update/update_controller.dart';
 import '../update/update_models.dart';
 import '../update/update_ui.dart';
@@ -71,6 +72,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 }
               }
             },
+          ),
+          ListTile(
+            leading: const Icon(Icons.dns_outlined),
+            title: const Text('الخادم الشخصي'),
+            subtitle: Text(ref.watch(baseUrlProvider).replaceFirst(RegExp('^https?://'), '')),
+            onTap: () => ServerDialog.show(context),
           ),
           const ListTile(
             leading: Icon(Icons.system_update),

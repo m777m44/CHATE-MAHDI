@@ -30,6 +30,11 @@ export class AuthController {
     return this.auth.refresh(dto.refreshToken);
   }
 
+  @Get('health')
+  health() {
+    return { ok: true, service: 'CHATE-MAHDI API' };
+  }
+
   @UseGuards(JwtAuthGuard)
   @Get('me')
   async me(@CurrentUser() user: AuthUser) {

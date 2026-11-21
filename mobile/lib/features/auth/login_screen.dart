@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/session.dart';
 import '../../core/theme.dart';
+import 'server_dialog.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -29,6 +30,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final session = ref.watch(sessionProvider);
     final controller = ref.read(sessionProvider.notifier);
+
+    // Navigation listens to session state itself, so a successful login is
+    // never missed even if the await-based check races a rebuild.
+    ref.listen<SessionState>(sessionProvider, (prev, next) {
+      if (next.isAuthed && !(prev?.isAuthed ?? false) && mounted) {
+        context.go('/home');
+      }
+    });
 
     return Scaffold(
       body: SafeArea(
@@ -90,7 +99,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                   : const Text('تسجيل الدخول', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
+            Center(
+              child: TextButton.icon(
+                onPressed: () => ServerDialog.show(context),
+                icon: const Icon(Icons.dns_outlined, size: 18),
+                label: const Text('الخادم الشخصي (متقدم)', style: TextStyle(fontSize: 13)),
+              ),
+            ),
+            const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
