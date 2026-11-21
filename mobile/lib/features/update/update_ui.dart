@@ -174,7 +174,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
           const SizedBox(height: 24),
           const Divider(),
           const Text(
-            'يتم البحث عن التحديثات في مستودع GitHub العام (بدون أي توكن). عند الضغط على "تحديث الآن" يتم تنزيل app-release.apk ثم فتح مثبِّت النظام؛ الاسم المثبَّت (Application ID) ثابت والتحديث سيحافظ على كل بياناتك.',
+            'يتم البحث عن التحديثات في مستودع GitHub العام (بدون أي توكن). عند الضغط على "تحديث الآن" يتم تنزيل CHATE-MAHDI.apk ثم فتح مثبِّت النظام؛ الاسم المثبَّت (Application ID) ثابت والتحديث سيحافظ على كل بياناتك.',
             style: TextStyle(fontSize: 12, color: AppTheme.igTextSecondary),
           ),
         ],

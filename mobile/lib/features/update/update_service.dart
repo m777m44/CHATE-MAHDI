@@ -10,7 +10,7 @@ import 'update_models.dart';
 /// Implements the In-App Update flow:
 ///   1. latest release metadata  -> GitHub API (public, no token)
 ///   2. comparison               -> semantic version (v prefix accepted)
-///   3. download                 -> Dio into {cacheDir}/update/app-release.apk
+///   3. download                 -> Dio into {cacheDir}/update/CHATE-MAHDI.apk
 ///   4. validation               -> exists, extension .apk, size > 0
 ///   5. installation             -> native MethodChannel:
 ///        canInstall() / requestInstallPermission() / installApk(path)

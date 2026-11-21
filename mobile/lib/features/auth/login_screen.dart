@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/config.dart';
-import '../../core/api_client.dart';
 import '../../core/session.dart';
 import '../../core/theme.dart';
 
@@ -17,19 +15,13 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _identifier = TextEditingController();
   final _password = TextEditingController();
-  late final TextEditingController _server;
-
-  @override
-  void initState() {
-    super.initState();
-    _server = TextEditingController(text: ref.read(baseUrlProvider));
-  }
+  bool _obscure = true;
+  String? _validation;
 
   @override
   void dispose() {
     _identifier.dispose();
     _password.dispose();
-    _server.dispose();
     super.dispose();
   }
 
@@ -59,43 +51,44 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             const SizedBox(height: 36),
             TextField(
               controller: _identifier,
-              decoration: const InputDecoration(hintText: 'البريد الإلكتروني أو اسم المستخدم'),
+              keyboardType: TextInputType.emailAddress,
+              autofillHints: const [AutofillHints.username, AutofillHints.email],
+              decoration: const InputDecoration(
+                prefixIcon: Icon(Icons.person_outline),
+                hintText: 'البريد الإلكتروني أو اسم المستخدم',
+              ),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _password,
-              obscureText: true,
-              decoration: const InputDecoration(hintText: 'كلمة المرور'),
-            ),
-            const SizedBox(height: 12),
-            ExpansionTile(
-              tilePadding: EdgeInsets.zero,
-              title: const Text('خادم API', style: TextStyle(fontSize: 13)),
-              children: [
-                TextField(
-                  controller: _server,
-                  decoration: const InputDecoration(hintText: AppConfig.defaultApiBaseUrl),
+              obscureText: _obscure,
+              onSubmitted: session.busy ? null : (_) => _submit(controller),
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.lock_outline),
+                hintText: 'كلمة المرور',
+                suffixIcon: IconButton(
+                  icon: Icon(_obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined),
+                  onPressed: () => setState(() => _obscure = !_obscure),
                 ),
-              ],
+              ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
+            if (_validation != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Text(_validation!, style: const TextStyle(color: Colors.red)),
+              ),
             if (session.error != null)
               Padding(
                 padding: const EdgeInsets.only(bottom: 12),
                 child: Text(session.error!, style: const TextStyle(color: Colors.red)),
               ),
             FilledButton(
-              onPressed: session.busy
-                  ? null
-                  : () async {
-                      await controller.login(_identifier.text, _password.text, _server.text);
-                      if (ref.read(sessionProvider).isAuthed && context.mounted) {
-                        context.go('/home');
-                      }
-                    },
+              onPressed: session.busy ? null : () => _submit(controller),
+              style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
               child: session.busy
                   ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                  : const Text('تسجيل الدخول'),
+                  : const Text('تسجيل الدخول', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
             ),
             const SizedBox(height: 16),
             Row(
@@ -112,5 +105,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _submit(SessionController controller) async {
+    final id = _identifier.text.trim();
+    final pass = _password.text;
+    if (id.isEmpty || pass.isEmpty) {
+      setState(() => _validation = 'الرجاء إدخال البريد أو اسم المستخدم وكلمة المرور');
+      return;
+    }
+    setState(() => _validation = null);
+    await controller.login(id, pass);
+    if (ref.read(sessionProvider).isAuthed && mounted) {
+      context.go('/home');
+    }
   }
 }

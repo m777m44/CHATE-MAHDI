@@ -112,8 +112,7 @@ class SessionController extends StateNotifier<SessionState> {
     state = state.copyWith(tokens: tokens, user: User.fromJson(userJson));
   }
 
-  Future<void> login(String identifier, String password, String serverUrl) async {
-    await _applyServerUrl(serverUrl);
+  Future<void> login(String identifier, String password) async {
     final api = ref.read(apiClientProvider);
     state = state.copyWith(busy: true, clearError: true);
     try {
@@ -121,18 +120,34 @@ class SessionController extends StateNotifier<SessionState> {
         'identifier': identifier,
         'password': password,
       });
-      await saveTokens(
-        AuthTokens(accessToken: res.data['accessToken'], refreshToken: res.data['refreshToken']),
-        (res.data['user'] as Map<String, dynamic>),
-      );
+      await _applyAuthResponse(res.data);
       state = state.copyWith(busy: false, clearError: true);
-    } on DioException catch (e) {
+    } catch (e) {
       state = state.copyWith(busy: false, error: humanError(e));
     }
   }
 
-  Future<void> register(String email, String username, String name, String password, String serverUrl) async {
-    await _applyServerUrl(serverUrl);
+  /// Extracts tokens + user from an auth endpoint payload and persists them.
+  /// Anything unexpected is converted to a readable Arabic error instead of an
+  /// uncaught exception (which previously left the button spinning forever).
+  Future<void> _applyAuthResponse(dynamic data) async {
+    if (data is! Map ||
+        data['accessToken'] is! String ||
+        data['refreshToken'] is! String ||
+        data['user'] is! Map<String, dynamic>) {
+      state = state.copyWith(busy: false, error: 'رد غير متوقع من الخادم. تأكد من العنوان وإعدادات الخادم ثم حاول مجدداً.');
+      throw StateError('unexpected auth response');
+    }
+    await saveTokens(
+      AuthTokens(
+        accessToken: data['accessToken'] as String,
+        refreshToken: data['refreshToken'] as String,
+      ),
+      data['user'] as Map<String, dynamic>,
+    );
+  }
+
+  Future<void> register(String email, String username, String name, String password) async {
     final api = ref.read(apiClientProvider);
     state = state.copyWith(busy: true, clearError: true);
     try {
@@ -142,22 +157,10 @@ class SessionController extends StateNotifier<SessionState> {
         'name': name.isEmpty ? username : name,
         'password': password,
       });
-      await saveTokens(
-        AuthTokens(accessToken: res.data['accessToken'], refreshToken: res.data['refreshToken']),
-        (res.data['user'] as Map<String, dynamic>),
-      );
+      await _applyAuthResponse(res.data);
       state = state.copyWith(busy: false, clearError: true);
-    } on DioException catch (e) {
+    } catch (e) {
       state = state.copyWith(busy: false, error: humanError(e));
-    }
-  }
-
-  Future<void> _applyServerUrl(String serverUrl) async {
-    final url = serverUrl.trim();
-    if (url.isNotEmpty) {
-      ref.read(baseUrlProvider.notifier).state = url;
-      ref.read(apiClientProvider).updateBaseUrl(url);
-      await SessionStorage.setString('baseUrl', url);
     }
   }
 
@@ -181,13 +184,45 @@ class StateReady extends SessionState {
   StateReady({super.user, super.tokens, super.initialized = false});
 }
 
-String humanError(DioException e) {
-  final data = e.response?.data;
-  if (data is Map && data['message'] != null) return data['message'].toString();
-  if (e.type == DioExceptionType.connectionError || e.type == DioExceptionType.connectionTimeout) {
-    return 'تعذر الاتصال بالخادم. تأكد من عنوان الخادم واتصال الإنترنت';
+/// Maps API failures to short Arabic messages, translating the common
+/// class-validator texts so users never see raw English internals.
+String humanError(Object e) {
+  if (e is! DioException) {
+    if (e is StateError) return 'تعذر إكمال العملية، حاول مجدداً';
+    return 'تعذر الاتصال بالخادم. حاول مجدداً';
   }
+  final data = e.response?.data;
+  final dynamic msg = data is Map ? data['message'] : null;
+  if (msg != null) {
+    final text = (msg is List) ? msg.join('. ') : msg.toString();
+    return translateError(text);
+  }
+  if (e.type == DioExceptionType.connectionError ||
+      e.type == DioExceptionType.connectionTimeout ||
+      e.type == DioExceptionType.receiveTimeout ||
+      e.type == DioExceptionType.sendTimeout) {
+    return 'تعذر الاتصال بالخادم. تحقق من اتصال الإنترنت أو عنوان الخادم';
+  }
+  if (e.type == DioExceptionType.cancel) return 'تم إلغاء العملية';
   return 'حدث خطأ غير متوقع (${e.response?.statusCode ?? e.type.name})';
+}
+
+String translateError(String text) {
+  const table = <String, String>{
+    'username must be longer than or equal to 3 characters':
+        'اسم المستخدم يجب أن يكون 3 أحرف على الأقل',
+    'password must be longer than or equal to 8 characters':
+        'كلمة المرور يجب أن تكون 8 أحرف على الأقل',
+    'email must be an email': 'البريد الإلكتروني غير صالح',
+    'Email or username already in use': 'البريد أو اسم المستخدم مستخدم بالفعل',
+    'Username may only contain letters, numbers, dots and underscores':
+        'اسم المستخدم يقبل الأحرف والأرقام والنقطة وشرطة _ فقط',
+    'Invalid credentials': 'بيانات الدخول غير صحيحة',
+  };
+  for (final entry in table.entries) {
+    if (text.contains(entry.key)) return entry.value;
+  }
+  return text;
 }
 
 final tokensProvider = Provider<AuthTokens?>((ref) => ref.watch(sessionProvider).tokens);

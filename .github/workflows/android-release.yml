@@ -1,7 +1,7 @@
 name: Android Release
 
 # Builds a release-signed APK on every push to main, on version tags (v*),
-# and manually. The APK is published to GitHub Releases as app-release.apk so
+# and manually. The APK is published to GitHub Releases as CHATE-MAHDI.apk so
 # the in-app updater can fetch:
 #   https://api.github.com/repos/m777m44/CHATE-MAHDI/releases/latest
 # and offer "تحديث" directly from inside the app.
@@ -116,6 +116,7 @@ jobs:
             TAG="v${VERSION}"
           fi
 
+          cp mobile/build/app/outputs/flutter-apk/app-release.apk /tmp/CHATE-MAHDI.apk
           cp mobile/build/app/outputs/flutter-apk/app-release.apk /tmp/app-release.apk
 
           NOTES_FILE="$(mktemp)"
@@ -124,13 +125,14 @@ jobs:
             printf "الإصدار: ${VERSION}\n"
             printf "versionCode: ${BUILD_NUMBER}\n"
             printf 'التطبيق يدعم التحديث الداخلي (In-App Update): سيتحقق تلقائياً من هذا الإصدار ويعرض زر تحديث.\n'
+            printf 'ملف التطبيق: CHATE-MAHDI.apk (نسخة احتياطية app-release.apk متوفرة أيضاً).\n'
           } > "$NOTES_FILE"
 
           if gh release view "$TAG" --repo m777m44/CHATE-MAHDI >/dev/null 2>&1; then
-            gh release upload "$TAG" /tmp/app-release.apk --repo m777m44/CHATE-MAHDI --clobber
+            gh release upload "$TAG" /tmp/CHATE-MAHDI.apk /tmp/app-release.apk --repo m777m44/CHATE-MAHDI --clobber
             gh release edit "$TAG" --repo m777m44/CHATE-MAHDI --latest --title "CHATE-MAHDI ${TAG}" --notes-file "$NOTES_FILE"
           else
-            gh release create "$TAG" /tmp/app-release.apk \
+            gh release create "$TAG" /tmp/CHATE-MAHDI.apk /tmp/app-release.apk \
               --repo m777m44/CHATE-MAHDI \
               --latest \
               --title "CHATE-MAHDI ${TAG}" \
@@ -151,7 +153,7 @@ jobs:
         run: |
           for i in $(seq 1 12); do
             CODE=$(curl -s -o /dev/null -w '%{http_code}' -L \
-              "https://github.com/m777m44/CHATE-MAHDI/releases/latest/download/app-release.apk")
+              "https://github.com/m777m44/CHATE-MAHDI/releases/latest/download/CHATE-MAHDI.apk")
             echo "attempt $i -> HTTP $CODE"
             if [ "$CODE" = "200" ]; then
               echo "Latest APK download link verified."

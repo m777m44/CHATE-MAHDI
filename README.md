@@ -10,12 +10,12 @@
 |---|---|
 | المستودع | https://github.com/m777m44/CHATE-MAHDI |
 | آخر إصدار (Release) | https://github.com/m777m44/CHATE-MAHDI/releases/latest |
-| تحميل APK مباشر | https://github.com/m777m44/CHATE-MAHDI/releases/latest/download/app-release.apk |
+| تحميل APK مباشر | https://github.com/m777m44/CHATE-MAHDI/releases/latest/download/CHATE-MAHDI.apk |
 | GitHub API لآخر إصدار (يستخدمه التطبيق) | https://api.github.com/repos/m777m44/CHATE-MAHDI/releases/latest |
 
 - **Application ID ثابت:** `com.mahdim44.chatemahdi`
-- **اسم ملف الـ APK في كل إصدار:** `app-release.apk`
-- الإصدار الأول: `1.0.0`، و `versionCode` يزيد تلقائياً مع كل بناء (`github.run_number`).
+- **اسم ملف الـ APK في كل إصدار:** `CHATE-MAHDI.apk` (ونسخة احتياطية `app-release.apk` متوفرة مع كل إصدار لضمان عدم توقف أي رابط قديم)
+- الإصدار الحالي: `1.1.0`، و `versionCode` يزيد تلقائياً مع كل بناء (`github.run_number`).
 
 ## التقنيات
 
@@ -114,7 +114,7 @@ gh secret set ANDROID_KEY_PASSWORD         # أدخل كلمة مرور المف
    ```
 4. سيعمل `.github/workflows/android-release.yml` تلقائياً:
    - بناء APK موقّع release (بدون minify/shrink حفاظاً على سلامة التحديث الداخلي).
-   - إنشاء Release (أو تحديث الملف بنفس الـ tag) ورفع الملف باسم `app-release.apk`.
+   - إنشاء Release (أو تحديث الملف بنفس الـ tag) ورفع الملف باسم `CHATE-MAHDI.apk` (و`app-release.apk` احتياطياً).
    - طباعة رقم الإصدار و versionCode في اللوق، والتحقق من رابط التحميل المباشر.
 5. المستخدمون الذين عندهم الإصدار الأقدم سيرون: بانر «تحديث متوفر» في الإعدادات،
    نافذة مرة واحدة لكل إصدار، وزر «تحديث الآن» في شاشة «حول التطبيق».
@@ -122,7 +122,7 @@ gh secret set ANDROID_KEY_PASSWORD         # أدخل كلمة مرور المف
 ## ميزة التحديث الداخلي (كيف تعمل)
 
 1. التطبيق يستدعي `GET https://api.github.com/repos/m777m44/CHATE-MAHDI/releases/latest`
-   (بدون أي توكن داخل التطبيق) ويقرأ `tag_name` و `assets[].name == "app-release.apk"`
+   (بدون أي توكن داخل التطبيق) ويقرأ `tag_name` و `assets[].name == "CHATE-MAHDI.apk"`
    مع `browser_download_url` و `published_at`.
 2. مقارنة إصدار دلالية (semver) بين الإصدار الحالي (`package_info_plus`) والإصدار الأحدث.
 3. عند وجود تحديث: التحقق من الاتصال، تنزيل الـ APK إلى مجلد الكاش عبر Dio مع شريط

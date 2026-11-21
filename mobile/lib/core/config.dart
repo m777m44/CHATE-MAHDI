@@ -18,7 +18,7 @@ class AppConfig {
   static const latestReleaseApiUrl =
       'https://api.github.com/repos/m777m44/CHATE-MAHDI/releases/latest';
   static const latestApkUrl =
-      'https://github.com/m777m44/CHATE-MAHDI/releases/latest/download/app-release.apk';
+      'https://github.com/m777m44/CHATE-MAHDI/releases/latest/download/CHATE-MAHDI.apk';
   static const repoUrl = 'https://github.com/m777m44/CHATE-MAHDI';
-  static const apkAssetName = 'app-release.apk';
+  static const apkAssetName = 'CHATE-MAHDI.apk';
 }
