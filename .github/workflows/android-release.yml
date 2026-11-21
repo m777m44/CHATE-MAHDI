@@ -79,7 +79,7 @@ jobs:
                 -storepass androiddebugkey -keypass androiddebugkey \
                 -dname "CN=ANDROID DEBUG, O=ANDROID, C=US"
             fi
-test -s ~/.android/ciem-key.jks
+            test -s ~/.android/ciem-key.jks
             cp ~/.android/ciem-key.jks "${CM_KEYSTORE_PATH}"
             echo "CM_KEYSTORE_PATH=${CM_KEYSTORE_PATH}" >> "$GITHUB_ENV"
             echo "CM_KEYSTORE_PASSWORD=androiddebugkey" >> "$GITHUB_ENV"
