@@ -73,6 +73,7 @@ jobs:
           else
             echo "::warning::ANDROID_KEYSTORE_* secrets not set yet - signing with a transient keystore cached between runs. Add the 4 secrets (see README > التوقيع والـ Secrets) for a permanent signing identity."
             mkdir -p "$(dirname "${CM_KEYSTORE_PATH}")"
+            mkdir -p ~/.android
             if [ ! -s ~/.android/ciem-key.jks ]; then
               "$JAVA_HOME/bin/keytool" -genkeypair -v -keystore ~/.android/ciem-key.jks \
                 -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 \
