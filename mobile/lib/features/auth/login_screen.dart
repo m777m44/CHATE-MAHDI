@@ -46,15 +46,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           children: [
             const SizedBox(height: 96),
             Center(
-              child: Container(
+              child: TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0.6, end: 1.0),
+                duration: const Duration(milliseconds: 650),
+                curve: Curves.easeOutBack,
+                builder: (context, t, child) => Transform.scale(scale: t, child: child),
+                child: Container(
                 width: 96,
                 height: 96,
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(colors: [Color(0xFFF58529), Color(0xFFDD2A7B), Color(0xFF8134AF), AppTheme.igBlue]),
+                  gradient: AppTheme.brandGradient,
                   borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(color: const Color(0xFFDD2A7B).withOpacity(0.35), blurRadius: 30, spreadRadius: 2),
+                  ],
                 ),
                 alignment: Alignment.center,
                 child: const Text('CM', style: TextStyle(color: Colors.white, fontSize: 34, fontWeight: FontWeight.bold)),
+                ),
               ),
             ),
             const SizedBox(height: 36),

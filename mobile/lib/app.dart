@@ -26,6 +26,7 @@ import 'features/profile/settings_screen.dart';
 import 'features/reels/reels_screen.dart';
 import 'features/stories/create_story_screen.dart';
 import 'features/stories/story_viewer_screen.dart';
+import 'features/update/update_center.dart';
 import 'features/update/update_ui.dart';
 
 final themeModeProvider = StateNotifierProvider<ThemeModeController, ThemeMode>((ref) {
@@ -133,6 +134,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(
+        path: '/update',
+        builder: (context, state) => const UpdateCenterScreen(),
+      ),
+      GoRoute(
         path: '/settings',
         builder: (context, state) => const SettingsScreen(),
       ),
@@ -194,29 +199,83 @@ class _ChatemahdiAppState extends ConsumerState<ChatemahdiApp> {
   }
 }
 
-class SplashScreen extends ConsumerWidget {
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends ConsumerState<SplashScreen>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c;
+  late final Animation<double> _scale;
+  late final Animation<double> _fade;
+
+  @override
+  void initState() {
+    super.initState();
+    _c = AnimationController(vsync: this, duration: const Duration(milliseconds: 900));
+    _scale = CurvedAnimation(parent: _c, curve: Curves.easeOutBack);
+    _fade = CurvedAnimation(parent: _c, curve: Curves.easeOut);
+    _c.repeat(reverse: true, min: 0.75);
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final oauthDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 72,
-              height: 72,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(colors: [Color(0xFFF58529), Color(0xFFDD2A7B), Color(0xFF8134AF), AppTheme.igBlue]),
-                borderRadius: BorderRadius.circular(20),
+      body: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: oauthDark
+                ? [const Color(0xFF121212), const Color(0xFF000000)]
+                : [const Color(0xFFFFFFFF), const Color(0xFFFAFAFA)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: Center(
+          child: FadeTransition(
+            opacity: _fade,
+            child: ScaleTransition(
+              scale: _scale,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 84,
+                    height: 84,
+                    decoration: BoxDecoration(
+                      gradient: AppTheme.brandGradient,
+                      borderRadius: BorderRadius.circular(22),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFDD2A7B).withOpacity(0.35),
+                          blurRadius: 32,
+                          spreadRadius: 2,
+                        ),
+                      ],
+                    ),
+                    alignment: Alignment.center,
+                    child: const Text('CM',
+                        style: TextStyle(color: Colors.white, fontSize: 34, fontWeight: FontWeight.bold)),
+                  ),
+                  const SizedBox(height: 18),
+                  const Text('CHATE-MAHDI',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, letterSpacing: 1.2)),
+                  const SizedBox(height: 36),
+                  const CircularProgressIndicator(strokeWidth: 2.5),
+                ],
               ),
-              alignment: Alignment.center,
-              child: const Text('CM', style: TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold)),
             ),
-            const SizedBox(height: 20),
-            const CircularProgressIndicator(),
-          ],
+          ),
         ),
       ),
     );

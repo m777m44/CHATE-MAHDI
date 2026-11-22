@@ -34,7 +34,7 @@ class UpdateBanner extends ConsumerWidget {
               ),
             ),
             TextButton(
-              onPressed: () => context.push('/about'),
+              onPressed: () => context.push('/update'),
               child: const Text('تحديث'),
             ),
           ],
@@ -84,7 +84,7 @@ class _UpdateDialogOnceState extends ConsumerState<UpdateDialogOnce> {
           FilledButton(
             onPressed: () {
               Navigator.of(context).pop();
-              context.push('/about');
+              context.push('/update');
             },
             child: const Text('تحديث'),
           ),
@@ -171,6 +171,12 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
               onPressed: state.phase == UpdatePhase.downloading ? null : () => notifier.downloadUpdate(),
             ),
           ],
+          const SizedBox(height: 8),
+          FilledButton.tonalIcon(
+            icon: const Icon(Icons.workspace_premium),
+            label: const Text('مركز التحديث المتطور'),
+            onPressed: () => context.push('/update'),
+          ),
           const SizedBox(height: 24),
           const Divider(),
           const Text(

@@ -82,7 +82,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const ListTile(
             leading: Icon(Icons.system_update),
             title: Text('التحديثات'),
-            subtitle: Text('افتح شاشة حول التطبيق لفحص وتنزيل التحديث'),
+            subtitle: Text('افتح مركز التحديث لفحص وتنزيل التحديث'),
           ),
           if (updateState.phase == UpdatePhase.checking)
             const Padding(

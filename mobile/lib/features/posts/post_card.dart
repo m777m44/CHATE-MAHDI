@@ -24,11 +24,34 @@ class PostCard extends ConsumerStatefulWidget {
   ConsumerState<PostCard> createState() => _PostCardState();
 }
 
-class _PostCardState extends ConsumerState<PostCard> {
+class _PostCardState extends ConsumerState<PostCard>
+    with SingleTickerProviderStateMixin {
   bool _liked = false;
   bool _saved = false;
   int _likeCount = 0;
   VideoPlayerController? _video;
+  late final AnimationController _heart;
+
+  @override
+  void initState() {
+    super.initState();
+    _heart = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+      lowerBound: 0,
+      upperBound: 1,
+    );
+    _liked = widget.post.viewerLiked;
+    _saved = widget.post.viewerSaved;
+    _likeCount = widget.post.likeCount;
+    if (widget.post.isVideo) {
+      _initVideo();
+    }
+  }
+
+  void _burstHeart() {
+    _heart.forward(from: 0);
+  }
 
   @override
   void initState() {
@@ -58,19 +81,26 @@ class _PostCardState extends ConsumerState<PostCard> {
   @override
   void dispose() {
     _video?.dispose();
+    _heart.dispose();
     super.dispose();
   }
 
   Future<void> _toggleLike({bool forceLike = false}) async {
     final newLiked = forceLike ? true : !_liked;
-    setState(() {
-      if (newLiked == _liked && forceLike) {
-        // double tap on an already-liked post: just animate, no API change
-        return;
+    if (!newLiked) {
+      setState(() {
+        _liked = false;
+        _likeCount -= 1;
+      });
+    } else {
+      if (forceLike) _burstHeart();
+      if (newLiked != _liked) {
+        setState(() {
+          _liked = true;
+          _likeCount += 1;
+        });
       }
-      _liked = newLiked;
-      _likeCount += newLiked ? 1 : -1;
-    });
+    }
     try {
       await ref.read(apiClientProvider).post('/posts/${widget.post.id}/like');
     } catch (_) {}
@@ -114,16 +144,43 @@ class _PostCardState extends ConsumerState<PostCard> {
           onTap: post.isVideo ? null : widget.onOpenMedia,
           child: AspectRatio(
             aspectRatio: post.aspectRatio > 0 ? post.aspectRatio : 1,
-            child: _mediaWidget(base),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Positioned.fill(child: _mediaWidget(base)),
+                // Instagram-style expanding heart burst on double tap.
+                AnimatedBuilder(
+                  animation: _heart,
+                  builder: (context, child) {
+                    final t = Curves.easeOutBack.transform(_heart.value);
+                    return Opacity(
+                      opacity: _heart.value < 0.55 ? 1.0 : 1.0 - ((_heart.value - 0.55) / 0.45),
+                      child: Transform.scale(
+                        scale: t * 2.4,
+                        child: child,
+                      ),
+                    );
+                  },
+                  child: const Icon(Icons.favorite, color: Colors.white, size: 64, shadows: [
+                    BoxShadow(color: Colors.black26, blurRadius: 16),
+                  ]),
+                ),
+              ],
+            ),
           ),
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8),
           child: Row(
             children: [
-              IconButton(
-                icon: Icon(_liked ? Icons.favorite : Icons.favorite_border, color: _liked ? Colors.red : null),
-                onPressed: () => _toggleLike(),
+              AnimatedScale(
+                scale: _liked ? 1.15 : 1.0,
+                duration: const Duration(milliseconds: 180),
+                curve: Curves.easeOutBack,
+                child: IconButton(
+                  icon: Icon(_liked ? Icons.favorite : Icons.favorite_border, color: _liked ? Colors.red : null),
+                  onPressed: () => _toggleLike(),
+                ),
               ),
               IconButton(
                 icon: const Icon(Icons.chat_bubble_outline),
@@ -188,6 +245,8 @@ class _PostCardState extends ConsumerState<PostCard> {
     return CachedNetworkImage(
       imageUrl: mediaUrl(widget.post.mediaUrl, base),
       fit: BoxFit.cover,
+      fadeOutDuration: const Duration(milliseconds: 100),
+      fadeInDuration: const Duration(milliseconds: 240),
       placeholder: (_, __) => Container(color: Colors.grey.shade200),
       errorWidget: (_, __, ___) => const Center(child: Icon(Icons.broken_image)),
     );
