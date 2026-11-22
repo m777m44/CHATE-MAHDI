@@ -53,17 +53,6 @@ class _PostCardState extends ConsumerState<PostCard>
     _heart.forward(from: 0);
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _liked = widget.post.viewerLiked;
-    _saved = widget.post.viewerSaved;
-    _likeCount = widget.post.likeCount;
-    if (widget.post.isVideo) {
-      _initVideo();
-    }
-  }
-
   Future<void> _initVideo() async {
     final base = ref.read(baseUrlProvider);
     final controller = VideoPlayerController.networkUrl(Uri.parse(mediaUrl(widget.post.mediaUrl, base)));
